@@ -1,0 +1,16 @@
+[paths]
+source =
+   src/mqttcat
+   */site-packages/mqttcat
+
+[run]
+branch = true
+source =
+    mqttcat
+    tests
+parallel = true
+
+[report]
+show_missing = true
+precision = 2
+omit = *migrations*
