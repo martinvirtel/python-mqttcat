@@ -67,7 +67,6 @@ setup(
     ],
     install_requires=[
         'click',
-        'jmespath',
         'paho-mqtt==1.2'
         # eg: 'aspectlib==1.1.1', 'six>=1.7',
     ],
@@ -78,7 +77,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'mqttcat = mqttcat.cli:main',
+            'mqttcat = mqttcat.cli:run',
         ]
     },
 )
