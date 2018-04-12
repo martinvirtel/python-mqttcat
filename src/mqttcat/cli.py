@@ -15,6 +15,10 @@ Why does this file exist, and why not put this in __main__?
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 import click
+import sys
+import logging
+
+logger=logging.getLogger(__name__)
 
 from mqttcat import MqttTopic
 
@@ -45,6 +49,8 @@ def set_root_logger(loglevel) :
 @click.argument('url')
 def run(url,loglevel,echo,loop,wait) :
     """
+    A Mqtt Message filter inspired by netcat and other unix tools.
+
     Publishes Messages from STDIN to Mqtt Topic
 
       -or-
@@ -56,13 +62,32 @@ def run(url,loglevel,echo,loop,wait) :
         mqtt://hostname/topic
         tcp://hostname:1883/topic
         ws://hostname/topic
+
+
+    Usage Examples:
+
+        mqttcat --echo mqtt://localhost/%23 >/dev/null
+
+        ... will subscribe to all topics ("%24" is urlencoded #), and echo them to STDERR for control
+
+
+        echo "Heart ... beat" | mqttcat --echo --loop --wait=3.3 mqtt://localhost/heartbeat-topic
+
+        ... will publish "Heart ... beat" every 3.3 seconds to the topic "heartbeat-topic"
+
+
+        mqttcat mqtt://source/ticktock | rq 'filter (a) => { a.payload="tock" }' | mqttcat mqtt://destination/tock
+
+        ... subscribe to ticktock topic on host source, filter out the messages whose payload is tock,
+        and forward those to the tock topic (using the rq tool https://github.com/dflemstr/rq)
+
     """
     set_root_logger(loglevel)
     # load_config(config)
     if echo :
         echostream=sys.stderr
     else :
-        echostream=None
+        echostream=False
     t=MqttTopic(url,echo=echostream)
     if not sys.stdout.isatty() :
         logger.info("Subscribed to {} - messages will be written to STDOUT".format(t.topic))

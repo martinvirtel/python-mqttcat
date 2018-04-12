@@ -68,14 +68,15 @@ class MqttTopic(object) :
             obj[a]=val
         repr=json.dumps(obj) + "\n"
         sys.stdout.write(repr)
-        if self.echo is not None :
+        sys.stdout.flush()
+        if hasattr(self.echo,'write') :
             self.echo.write(repr)
 
 
     def publish(self,dicts,wait=None,echo=None) :
         for current in dicts :
             self.client.publish(self.topic,current["payload"])
-            if echo is not None :
+            if hasattr(echo,'write') :
                 self.echo.write(json.dumps(current)+"\n")
             if wait == True :
                 raise NotImplementedError("Missing: copy wait time from input stream")
@@ -85,14 +86,18 @@ class MqttTopic(object) :
 
     def feeder(self,stream,loop=False) :
         buf=[]
-        for line in stream.readlines() :
+        logger.debug(f"starting feeder")
+        for line in iter(stream.readline,None) :
+            if line is None :
+                break
             try :
                 current=json.loads(line)
             except Exception as e:
                 logger.debug(f"{line} not decoded as JSON: {e}")
-                current=dict(payload=line)
+                current=dict(payload=line[:-1])
             if loop :
                 buf.append(current)
+
             yield(current)
         if loop:
             while True :
@@ -117,5 +122,6 @@ protocols={
             'MQTTv31'  : paho.mqtt.client.MQTTv31,
             'MQTTv311' : paho.mqtt.client.MQTTv311
           }
+
 
 
