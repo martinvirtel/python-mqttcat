@@ -8,7 +8,7 @@ import urllib.parse
 from functools import partial
 import paho.mqtt.client
 import base64
-
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +24,9 @@ def to_data(bstr):
 
 class MqttTopic(object):
 
-    __slots__ = ('url', 'kwargs', 'client', 'topic', 'echo')
+    __slots__ = ('url', 'kwargs', 'client', 'topic', 'echo', 'writer')
 
-    def __init__(self, url, echo=None, **kwargs):
+    def __init__(self, url, echo=None, writer=sys.stdout, **kwargs):
         parsed = urllib.parse.urlsplit(url)
         if parsed.scheme in ('ws', 'websockets'):
             kwargs["transport"] = 'websockets'
@@ -39,6 +39,7 @@ class MqttTopic(object):
         self.client = client
         self.topic = urllib.parse.unquote(parsed.path[1:])
         self.echo = echo
+        self.writer = writer
         logger.debug("Connected to {url} {kwargs}".format(**locals()))
 
     def subscribe(self):
@@ -55,8 +56,8 @@ class MqttTopic(object):
                     val = to_data(val)
             obj[a] = val
         repres = json.dumps(obj) + "\n"
-        sys.stdout.write(repres)
-        sys.stdout.flush()
+        self.writer.write(repres)
+        self.writer.flush()
         if hasattr(self.echo, 'write'):
             self.echo.write(repres)
 
@@ -70,7 +71,8 @@ class MqttTopic(object):
             elif float(wait) > 0:
                 time.sleep(wait)
 
-    def feeder(self, stream, loop=False):
+    @staticmethod
+    def feeder(stream, loop=False):
         buf = []
         for line in iter(stream.readline, None):
             if line == '':

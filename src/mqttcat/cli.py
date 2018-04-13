@@ -47,8 +47,14 @@ def set_root_logger(loglevel):
 @click.option('--loop/--no-loop',
               default=False,
               help="Loop output")
+@click.option('--source',
+              default=None,
+              help="Message source file (use '-' for STDIN)")
+@click.option('--destination',
+              default=None,
+              help="Message source file (use '-' for STDOUT)")
 @click.argument('url')
-def run(url, loglevel, echo, loop, wait):
+def run(url, source, destination, loglevel, echo, loop, wait):
     """
     A Mqtt Message filter inspired by netcat and other unix tools.
 
@@ -85,13 +91,29 @@ def run(url, loglevel, echo, loop, wait):
     """
     set_root_logger(loglevel)
     # load_config(config)
+    mode = None
     if echo:
         echostream = sys.stderr
     else:
         echostream = False
-    t = MqttTopic(url, echo=echostream)
-    if not sys.stdout.isatty():
-        logger.info("Subscribed to {} - messages will be written to STDOUT".format(t.topic))
+    if source == '-' or (source is None and not sys.stdin.isatty()):
+        sourcestream = sys.stdin
+        mode = 'read'
+    else :
+        if source is not None :
+            sourcestream = open(source)
+            mode = 'read'
+    if mode is None :
+        if destination == '-' or (destination is None and not sys.stdout.isatty()):
+            deststream = sys.stdout
+            mode = 'write'
+        else :
+            if destination is not None :
+                deststream = open(destination,"w")
+                mode = 'write'
+    if mode == 'write':
+        t = MqttTopic(url, echo=echostream,writer=deststream)
+        logger.info("Subscribed to {} - messages will be written to {}".format(t.topic, deststream.name))
         t.subscribe()
         import time
         while True:
@@ -99,11 +121,12 @@ def run(url, loglevel, echo, loop, wait):
                 time.sleep(10)
             except KeyboardInterrupt:
                 break
-    elif not sys.stdin.isatty():
-        logger.info("Reading from STDIN - publishing messages to {} [loop:{loop},wait:{wait} sec.]".format(t.topic, **locals()))
-        t.publish(t.feeder(sys.stdin, loop=loop), wait=wait, echo=echo)
+    elif mode == 'read' :
+        t = MqttTopic(url, echo=echostream)
+        logger.info("Reading from {sourcestream.name} - publishing messages to {} [loop:{loop},wait:{wait} sec.]".format(t.topic, **locals()))
+        t.publish(MqttTopic.feeder(sourcestream, loop=loop), wait=wait, echo=echo)
     else:
-        print("STDIN and STDOUT are ttys - no action taken. Use --help for help")
+        print("Could not determine wether to read or write. Use STDIN redirection or --source parameter to publish Mqtt messages. Use STDOUT redirection or --destination to subscribe to topic or topics.")
 
 
 if __name__ == '__main__':
