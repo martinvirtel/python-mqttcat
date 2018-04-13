@@ -17,37 +17,38 @@ Why does this file exist, and why not put this in __main__?
 import click
 import sys
 import logging
-
-logger=logging.getLogger(__name__)
-
 from mqttcat import MqttTopic
 
-def set_root_logger(loglevel) :
-    try :
-        if type(loglevel)==int :
-            level=loglevel
-        else :
-            level=getattr(logging,loglevel)
-            assert(type(level)==int)
+logger = logging.getLogger(__name__)
+
+
+def set_root_logger(loglevel):
+    try:
+        if type(loglevel) == int:
+            level = loglevel
+        else:
+            level = getattr(logging, loglevel)
+            assert(type(level) == int)
         logging.getLogger().setLevel(level)
     except Exception as e:
-        raise ValueError("Failed setting log level to {}: {}".format(loglevel,repr(e)))
+        raise ValueError("Failed setting log level to {}: {}".format(loglevel,
+                         repr(e)))
 
 
 @click.command()
-@click.option('--loglevel',default="INFO",
-                           help="Python loglevel, one of DEBUG,INFO,WARNING,ERROR,CRITICAL")
-@click.option('--echo/--no-echo',
-                          default=False,
-                          help="Echo Mqtt Messages to STDERR")
+@click.option('--loglevel', default="INFO",
+              help="Python loglevel, one of DEBUG,INFO,WARNING,ERROR,CRITICAL")
+@click.uption('--echo/--no-echo',
+              default=False,
+              help="Echo Mqtt Messages to STDERR")
 @click.option('--wait', type=float,
-                          default=0.1,
-                          help="Wait time between messages in Seconds (can be float)")
+              default=0.1,
+              help="Wait time between messages in Seconds (can be float)")
 @click.option('--loop/--no-loop',
-                          default=False,
-                          help="Loop output")
+              default=False,
+              help="Loop output")
 @click.argument('url')
-def run(url,loglevel,echo,loop,wait) :
+def run(url, loglevel, echo, loop, wait):
     """
     A Mqtt Message filter inspired by netcat and other unix tools.
 
@@ -84,27 +85,26 @@ def run(url,loglevel,echo,loop,wait) :
     """
     set_root_logger(loglevel)
     # load_config(config)
-    if echo :
-        echostream=sys.stderr
-    else :
-        echostream=False
-    t=MqttTopic(url,echo=echostream)
-    if not sys.stdout.isatty() :
+    if echo:
+        echostream = sys.stderr
+    else:
+        echostream = False
+    t = MqttTopic(url, echo=echostream)
+    if not sys.stdout.isatty():
         logger.info("Subscribed to {} - messages will be written to STDOUT".format(t.topic))
         t.subscribe()
         import time
-        while True :
-            try :
+        while True:
+            try:
                 time.sleep(10)
-            except KeyboardInterrupt :
+            except KeyboardInterrupt:
                 break
-    elif not sys.stdin.isatty() :
-        logger.info("Reading from STDIN - publishing messages to {} [loop:{loop},wait:{wait} sec.]".format(t.topic,**locals()))
-        t.publish(t.feeder(sys.stdin,loop=loop),wait=wait,echo=echo)
-    else :
+    elif not sys.stdin.isatty():
+        logger.info("Reading from STDIN - publishing messages to {} [loop:{loop},wait:{wait} sec.]".format(t.topic, **locals()))
+        t.publish(t.feeder(sys.stdin, loop=loop), wait=wait, echo=echo)
+    else:
         print("STDIN and STDOUT are ttys - no action taken. Use --help for help")
 
 
-if __name__ == '__main__' :
+if __name__ == '__main__':
     run()
-
