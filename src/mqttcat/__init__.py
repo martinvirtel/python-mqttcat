@@ -73,13 +73,14 @@ class MqttTopic(object):
     def feeder(self, stream, loop=False):
         buf = []
         for line in iter(stream.readline, None):
-            if line is None:
+            if line == '':
                 break
-            try:
-                current = json.loads(line)
-            except Exception as e:
-                logger.debug("{line} not decoded as JSON: {e}".format(**locals()))
-                current = dict(payload=line[:-1])
+            if type(line) == str:
+                try:
+                    current = json.loads(line)
+                except Exception as e:
+                    logger.debug("'{line}' not decoded as JSON: {e}".format(**locals()))
+                    current = dict(payload=line[:-1])
             if loop:
                 buf.append(current)
 

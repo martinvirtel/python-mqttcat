@@ -24,7 +24,7 @@ def read(*names, **kwargs):
 
 setup(
     name='mqttcat',
-    version='0.1.0',
+    version='0.1.1',
     license='BSD 2-Clause License',
     description='Netcat for MQTT',
     long_description='%s\n%s' % (
@@ -41,21 +41,21 @@ setup(
     zip_safe=False,
     classifiers=[
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'Development Status :: 1 - Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: Unix',
-        #'Operating System :: POSIX',
-        #'Operating System :: Microsoft :: Windows',
-        #'Programming Language :: Python',
-        #'Programming Language :: Python :: 2.7',
-        #'Programming Language :: Python :: 3',
-        #'Programming Language :: Python :: 3.3',
-        #'Programming Language :: Python :: 3.4',
-        #'Programming Language :: Python :: 3.5',
+        # 'Operating System :: POSIX',
+        # 'Operating System :: Microsoft :: Windows',
+        # 'Programming Language :: Python',
+        # 'Programming Language :: Python :: 2.7',
+        # 'Programming Language :: Python :: 3',
+        # 'Programming Language :: Python :: 3.3',
+        # 'Programming Language :: Python :: 3.4',
+        # 'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-        #'Programming Language :: Python :: Implementation :: CPython',
-        #'Programming Language :: Python :: Implementation :: PyPy',
+        # 'Programming Language :: Python :: Implementation :: CPython',
+        # 'Programming Language :: Python :: Implementation :: PyPy',
         # uncomment if you test on these interpreters:
         # 'Programming Language :: Python :: Implementation :: IronPython',
         # 'Programming Language :: Python :: Implementation :: Jython',
@@ -63,7 +63,7 @@ setup(
         'Topic :: Utilities',
     ],
     keywords=[
-        # eg: 'keyword1', 'keyword2', 'keyword3',
+        'mqtt'  # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
     install_requires=[
         'click',

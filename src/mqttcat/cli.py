@@ -38,7 +38,7 @@ def set_root_logger(loglevel):
 @click.command()
 @click.option('--loglevel', default="INFO",
               help="Python loglevel, one of DEBUG,INFO,WARNING,ERROR,CRITICAL")
-@click.uption('--echo/--no-echo',
+@click.option('--echo/--no-echo',
               default=False,
               help="Echo Mqtt Messages to STDERR")
 @click.option('--wait', type=float,
