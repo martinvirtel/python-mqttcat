@@ -18,6 +18,7 @@ import click
 import sys
 import logging
 from mqttcat import MqttTopic
+from mqttcat.emittarget import AppendToFile,SnapshotToFile
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +51,14 @@ def set_root_logger(loglevel):
 @click.option('--source',
               default=None,
               help="Message source file (use '-' for STDIN)")
+@click.option('--follow/--no-follow',
+              default=False,
+              help="Wait for additional input")
 @click.option('--destination',
               default=None,
               help="Message source file (use '-' for STDOUT)")
 @click.argument('url')
-def run(url, source, destination, loglevel, echo, loop, wait):
+def run(url, source, follow, destination, loglevel, echo, loop, wait):
     """
     A Mqtt Message filter inspired by netcat and other unix tools.
 
@@ -105,15 +109,15 @@ def run(url, source, destination, loglevel, echo, loop, wait):
             mode = 'read'
     if mode is None :
         if destination == '-' or (destination is None and not sys.stdout.isatty()):
-            deststream = sys.stdout
+            deststream = AppendToFile(sys.stdout)
             mode = 'write'
         else :
             if destination is not None :
-                deststream = open(destination,"w")
+                deststream = AppendToFile(destination)
                 mode = 'write'
     if mode == 'write':
-        t = MqttTopic(url, echo=echostream,writer=deststream)
-        logger.info("Subscribed to {} - messages will be written to {}".format(t.topic, deststream.name))
+        t = MqttTopic(url, echo=echostream,target=deststream)
+        logger.info("Subscribed to {} - messages will be written to {}".format(t.topic, deststream))
         t.subscribe()
         import time
         while True:
@@ -124,7 +128,7 @@ def run(url, source, destination, loglevel, echo, loop, wait):
     elif mode == 'read' :
         t = MqttTopic(url, echo=echostream)
         logger.info("Reading from {sourcestream.name} - publishing messages to {} [loop:{loop},wait:{wait} sec.]".format(t.topic, **locals()))
-        t.publish(MqttTopic.feeder(sourcestream, loop=loop), wait=wait, echo=echo)
+        t.publish(MqttTopic.feeder(sourcestream, loop=loop,follow=follow), wait=wait, echo=echo)
     else:
         print("Could not determine wether to read or write. Use STDIN redirection or --source parameter to publish Mqtt messages. Use STDOUT redirection or --destination to subscribe to topic or topics.")
 

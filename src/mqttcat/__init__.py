@@ -9,6 +9,7 @@ from functools import partial
 import paho.mqtt.client
 import base64
 import sys
+from mqttcat.emittarget import AppendToFile
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +25,9 @@ def to_data(bstr):
 
 class MqttTopic(object):
 
-    __slots__ = ('url', 'kwargs', 'client', 'topic', 'echo', 'writer')
+    __slots__ = ('url', 'kwargs', 'client', 'topic', 'echo', 'target')
 
-    def __init__(self, url, echo=None, writer=sys.stdout, **kwargs):
+    def __init__(self, url, echo=None, target=AppendToFile(sys.stdout), **kwargs):
         parsed = urllib.parse.urlsplit(url)
         if parsed.scheme in ('ws', 'websockets'):
             kwargs["transport"] = 'websockets'
@@ -39,7 +40,7 @@ class MqttTopic(object):
         self.client = client
         self.topic = urllib.parse.unquote(parsed.path[1:])
         self.echo = echo
-        self.writer = writer
+        self.target = target
         logger.debug("Connected to {url} {kwargs}".format(**locals()))
 
     def subscribe(self):
@@ -56,8 +57,7 @@ class MqttTopic(object):
                     val = to_data(val)
             obj[a] = val
         repres = json.dumps(obj) + "\n"
-        self.writer.write(repres)
-        self.writer.flush()
+        self.target.emit(repres)
         if hasattr(self.echo, 'write'):
             self.echo.write(repres)
 
@@ -72,11 +72,14 @@ class MqttTopic(object):
                 time.sleep(wait)
 
     @staticmethod
-    def feeder(stream, loop=False):
+    def feeder(stream, loop=False, follow = False):
         buf = []
         for line in iter(stream.readline, None):
             if line == '':
-                break
+                if not follow:
+                    break
+                else:
+                    sleep(0.2)
             if type(line) == str:
                 try:
                     current = json.loads(line)
@@ -91,6 +94,7 @@ class MqttTopic(object):
             while True:
                 for current in buf:
                     yield current
+
 
     def __del__(self):
         try:
