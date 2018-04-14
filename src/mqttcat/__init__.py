@@ -8,7 +8,6 @@ import urllib.parse
 from functools import partial
 import paho.mqtt.client
 import base64
-import sys
 from mqttcat.emittarget import AppendToFile
 
 logger = logging.getLogger(__name__)
@@ -72,14 +71,15 @@ class MqttTopic(object):
                 time.sleep(wait)
 
     @staticmethod
-    def feeder(stream, loop=False, follow = False):
+    def feeder(stream, loop=False, follow=False):
         buf = []
         for line in iter(stream.readline, None):
             if line == '':
                 if not follow:
                     break
                 else:
-                    sleep(0.2)
+                    time.sleep(0.2)
+                    continue
             if type(line) == str:
                 try:
                     current = json.loads(line)
@@ -94,7 +94,6 @@ class MqttTopic(object):
             while True:
                 for current in buf:
                     yield current
-
 
     def __del__(self):
         try:

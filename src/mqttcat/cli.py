@@ -1,24 +1,12 @@
 """
 Module that contains the command line app.
 
-Why does this file exist, and why not put this in __main__?
-
-  You might be tempted to import things from __main__ later, but that will cause
-  problems: the code will get executed twice:
-
-  - When you run `python -mmqttcat` python will execute
-    ``__main__.py`` as a script. That means there won't be any
-    ``mqttcat.__main__`` in ``sys.modules``.
-  - When you import __main__ it will get executed again (as a module) because
-    there's no ``mqttcat.__main__`` in ``sys.modules``.
-
-  Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 import click
 import sys
 import logging
 from mqttcat import MqttTopic
-from mqttcat.emittarget import AppendToFile,SnapshotToFile
+from mqttcat.emittarget import AppendToFile, SnapshotToFile
 
 logger = logging.getLogger(__name__)
 
@@ -41,32 +29,35 @@ def set_root_logger(loglevel):
               help="Python loglevel, one of DEBUG,INFO,WARNING,ERROR,CRITICAL")
 @click.option('--echo/--no-echo',
               default=False,
-              help="Echo Mqtt Messages to STDERR")
-@click.option('--wait', type=float,
-              default=0.1,
-              help="Wait time between messages in Seconds (can be float)")
-@click.option('--loop/--no-loop',
-              default=False,
-              help="Loop output")
+              help="Echo MQTT Messages to STDERR")
 @click.option('--source',
               default=None,
-              help="Message source file (use '-' for STDIN)")
+              help="File to read MQTT messages to be published (use '-' for STDIN)")
+@click.option('--wait', type=float,
+              default=0.1,
+              help="Wait time between publishing messages messages in Seconds (can be float)")
+@click.option('--loop/--no-loop',
+              default=False,
+              help="Loop message publishing (starting at beginning of file after the end is reached")
 @click.option('--follow/--no-follow',
               default=False,
-              help="Wait for additional input")
+              help="Wait for additional in file after reaching the end (like Unix 'tail -f')")
 @click.option('--destination',
               default=None,
-              help="Message source file (use '-' for STDOUT)")
+              help="Append JSON-encoded MQTT messages to this file (use '-' for STDOUT)")
+@click.option('--snapshot/--no-snapshot',
+              default=False,
+              help="Keep only the last JSON-encoded message in the file specified with --destination")
 @click.argument('url')
-def run(url, source, follow, destination, loglevel, echo, loop, wait):
+def run(url, source, follow, destination, snapshot, loglevel, echo, loop, wait):
     """
-    A Mqtt Message filter inspired by netcat and other unix tools.
+    A MQTT Message filter inspired by netcat and other Unix tools.
 
-    Publishes Messages from STDIN to Mqtt Topic
+    Publishes Messages from STDIN to a MQTT Topic
 
       -or-
 
-    Subscribes to Mqtt Topic and writes messages to STDOUT
+    Subscribes to MQTT Topic and writes messages to STDOUT
 
     URL - Examples:
 
@@ -79,7 +70,7 @@ def run(url, source, follow, destination, loglevel, echo, loop, wait):
 
         mqttcat --echo mqtt://localhost/%23 >/dev/null
 
-        ... will subscribe to all topics ("%24" is urlencoded #), and echo them to STDERR for control
+        ... will subscribe to all topics ("%23" is urlencoded #), and echo them to STDERR for control
 
 
         echo "Heart ... beat" | mqttcat --echo --loop --wait=3.3 mqtt://localhost/heartbeat-topic
@@ -103,20 +94,24 @@ def run(url, source, follow, destination, loglevel, echo, loop, wait):
     if source == '-' or (source is None and not sys.stdin.isatty()):
         sourcestream = sys.stdin
         mode = 'read'
-    else :
-        if source is not None :
+    else:
+        if source is not None:
             sourcestream = open(source)
             mode = 'read'
-    if mode is None :
+    if mode is None:
+        if snapshot:
+            tclass = SnapshotToFile
+        else:
+            tclass = AppendToFile
         if destination == '-' or (destination is None and not sys.stdout.isatty()):
-            deststream = AppendToFile(sys.stdout)
+            deststream = tclass(sys.stdout)
             mode = 'write'
-        else :
-            if destination is not None :
-                deststream = AppendToFile(destination)
+        else:
+            if destination is not None:
+                deststream = tclass(destination)
                 mode = 'write'
     if mode == 'write':
-        t = MqttTopic(url, echo=echostream,target=deststream)
+        t = MqttTopic(url, echo=echostream, target=deststream)
         logger.info("Subscribed to {} - messages will be written to {}".format(t.topic, deststream))
         t.subscribe()
         import time
@@ -125,12 +120,16 @@ def run(url, source, follow, destination, loglevel, echo, loop, wait):
                 time.sleep(10)
             except KeyboardInterrupt:
                 break
-    elif mode == 'read' :
+    elif mode == 'read':
         t = MqttTopic(url, echo=echostream)
-        logger.info("Reading from {sourcestream.name} - publishing messages to {} [loop:{loop},wait:{wait} sec.]".format(t.topic, **locals()))
-        t.publish(MqttTopic.feeder(sourcestream, loop=loop,follow=follow), wait=wait, echo=echo)
+        logger.info("Reading from {sourcestream.name} - publishing messages to {} [loop:{loop},wait:{wait} sec.]".format(
+                    t.topic, **locals()))
+        t.publish(MqttTopic.feeder(sourcestream, loop=loop, follow=follow), wait=wait, echo=echo)
     else:
-        print("Could not determine wether to read or write. Use STDIN redirection or --source parameter to publish Mqtt messages. Use STDOUT redirection or --destination to subscribe to topic or topics.")
+        print("""
+        Could not determine wether to read or write.
+        Use STDIN redirection or --source parameter to publish Mqtt messages.
+        Use STDOUT redirection or --destination to subscribe to topic or topics.""")
 
 
 if __name__ == '__main__':
