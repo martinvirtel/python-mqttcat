@@ -55,7 +55,7 @@ class MqttTopic(object):
                 except Exception:
                     val = to_data(val)
             obj[a] = val
-        repres = json.dumps(obj) + "\n"
+        repres = "\x1e" + json.dumps(obj) + "\n"
         self.target.emit(repres)
         if hasattr(self.echo, 'write'):
             self.echo.write(repres)
@@ -74,6 +74,7 @@ class MqttTopic(object):
     def feeder(stream, loop=False, follow=False):
         buf = []
         for line in iter(stream.readline, None):
+            logger.debug(f"Read: {line}")
             if line == '':
                 if not follow:
                     break
@@ -81,11 +82,15 @@ class MqttTopic(object):
                     time.sleep(0.2)
                     continue
             if type(line) == str:
+                if line[0] == "\x1e": # ASCII RS Char, output i.e. by the jq tool with --se option
+                    line = line[1:]
                 try:
                     current = json.loads(line)
                 except Exception as e:
                     logger.debug("'{line}' not decoded as JSON: {e}".format(**locals()))
-                    current = dict(payload=line[:-1])
+                    current = line[:-1]
+                if type(current) == str:
+                    current = dict(payload=current)
             if loop:
                 buf.append(current)
 

@@ -20,3 +20,15 @@ Changelog
 * destination file can contain only the last messaget (with --snapshot)
 * destinations abstracted in emittargets.py
 
+0.1.3 (2018-04-14) (unreleased)
+-------------------------------
+
+*  made read/write mode detection more sophisticated: --source and --destination will 
+   overrule the detection of detected STDIN / STDOUT redirection (this makes it
+   easier to run mqttcat inside docker)
+*  input and output are now compatible with JSON streams defined in RFC7464_ - those
+   can be processed with jq_, for example
+
+
+.. _RFC7464: https://tools.ietf.org/html/rfc7464
+.. _jq: https://stedolan.github.io/jq/ 

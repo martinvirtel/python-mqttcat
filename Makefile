@@ -17,7 +17,7 @@ monitor: mosquitto
 	mqttcat mqtt://localhost/%23 --loglevel=DEBUG --echo >/dev/null
 
 heartbeat: mosquitto
-	printf "tick\ntock\n" | mqttcat mqtt://localhost/heartbeat --loop --wait=3
+	printf "tick\ntock\n" | mqttcat mqtt://localhost/heartbeat --loop --wait=1
 
 
 distribute:

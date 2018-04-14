@@ -44,7 +44,7 @@ def set_root_logger(loglevel):
               help="Wait for additional in file after reaching the end (like Unix 'tail -f')")
 @click.option('--destination',
               default=None,
-              help="Append JSON-encoded MQTT messages to this file (use '-' for STDOUT)")
+              help="Append JSON-Sequence-encoded MQTT messages to this file (use '-' for STDOUT)")
 @click.option('--snapshot/--no-snapshot',
               default=False,
               help="Keep only the last JSON-encoded message in the file specified with --destination")
@@ -65,6 +65,10 @@ def run(url, source, follow, destination, snapshot, loglevel, echo, loop, wait):
         tcp://hostname:1883/topic
         ws://hostname/topic
 
+    Input Format: plain text or newline-separated JSON or JSON Sequence (RFC7464)
+    are all fine.
+
+    Output Format: JSON Sequence (RFC7464)
 
     Usage Examples:
 
@@ -82,6 +86,10 @@ def run(url, source, follow, destination, snapshot, loglevel, echo, loop, wait):
 
         ... subscribe to ticktock topic on host source, filter out the messages whose payload is tock,
         and forward those to the tock topic (using the rq tool https://github.com/dflemstr/rq)
+
+        mqttcat mqtt://source/ticktock | grep 'tock' | awk 'NR%2==0' | mqttcat mqtt://destination/tock
+
+        ... repeat every second message with 'tock'
 
     """
     set_root_logger(loglevel)
