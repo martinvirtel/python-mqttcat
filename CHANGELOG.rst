@@ -10,25 +10,13 @@ Changelog
 0.1.1 (2018-04-13)
 ------------------
 
-* Flak8-compliant.
+* Flak8-compliant
 
 0.1.2 (2018-04-14)
 ------------------
 
-* possible destinations abstractet in emittargets.py
-* added the following switches to the command line tool:
-  --source TEXT               File to read MQTT messages to be published (use
-                              '-' for STDIN)
-  --wait FLOAT                Wait time between publishing messages messages
-                              in Seconds (can be float)
-  --loop / --no-loop          Loop message publishing (starting at beginning
-                              of file after the end is reached
-  --follow / --no-follow      Wait for additional in file after reaching the
-                              end (like Unix 'tail -f')
-
-
-  --destination TEXT          Append JSON-encoded MQTT messages to this file
-                              (use '-' for STDOUT)
-  --snapshot / --no-snapshot  Instead of appending, keep only the last JSON-encoded 
-                              message in the file specified with --destination
+* added --source and --destination options to the command line
+* source file can be followed (like 'tail -f ') with --follow
+* destination file can contain only the last messaget (with --snapshot)
+* destinations abstracted in emittargets.py
 

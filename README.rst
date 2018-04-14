@@ -2,83 +2,98 @@
 Overview
 ========
 
-.. start-badges
-
-.. list-table::
-    :stub-columns: 1
-
-    * - docs
-      - |docs|
-    * - tests
-      - |
-        |
-    * - package
-      - | |version| |wheel| |supported-versions| |supported-implementations|
-        | |commits-since|
-
-.. |docs| image:: https://readthedocs.org/projects/python-mqttcat/badge/?style=flat
-    :target: https://readthedocs.org/projects/python-mqttcat
-    :alt: Documentation Status
-
-.. |version| image:: https://img.shields.io/pypi/v/mqttcat.svg
-    :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/mqttcat
-
-.. |commits-since| image:: https://img.shields.io/github/commits-since/martinvirtel/python-mqttcat/v0.1.0.svg
-    :alt: Commits since latest release
-    :target: https://github.com/martinvirtel/python-mqttcat/compare/v0.1.0...master
-
-.. |wheel| image:: https://img.shields.io/pypi/wheel/mqttcat.svg
-    :alt: PyPI Wheel
-    :target: https://pypi.python.org/pypi/mqttcat
-
-.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/mqttcat.svg
-    :alt: Supported versions
-    :target: https://pypi.python.org/pypi/mqttcat
-
-.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/mqttcat.svg
-    :alt: Supported implementations
-    :target: https://pypi.python.org/pypi/mqttcat
-
-
-.. end-badges
-
 Netcat for MQTT
 
 * Free software: BSD 2-Clause License
 
+============
 Installation
 ============
 
-::
+This needs Python 3.6. At the command line::
 
-    pip install mqttcat
+    pip3 install mqttcat
 
+If your system does not provide python 3.6, a more comfortable way is to use the mqtttool Docker 
+container. Please see the `Github repo`_.
+
+
+=============
 Documentation
 =============
 
-https://python-mqttcat.readthedocs.io/
 
-Development
-===========
 
-To run the all tests run::
+::
 
-    tox
 
-Note, to combine the coverage data from all the tox environments run:
+    Usage: mqttcat [OPTIONS] URL
 
-.. list-table::
-    :widths: 10 90
-    :stub-columns: 1
+      A MQTT Message filter inspired by netcat and other Unix tools.
 
-    - - Windows
-      - ::
+      Publishes Messages from STDIN to a MQTT Topic
 
-            set PYTEST_ADDOPTS=--cov-append
-            tox
+        -or-
 
-    - - Other
-      - ::
+      Subscribes to MQTT Topic and writes messages to STDOUT
 
-            PYTEST_ADDOPTS=--cov-append tox
+      URL - Examples:
+
+          mqtt://hostname/topic     tcp://hostname:1883/topic
+          ws://hostname/topic
+
+      Usage Examples:
+
+          mqttcat --echo mqtt://localhost/%23 >/dev/null
+
+          ... will subscribe to all topics ("%23" is urlencoded #), and echo
+          them to STDERR for control
+
+          echo "Heart ... beat" | mqttcat --echo --loop --wait=3.3
+          mqtt://localhost/heartbeat-topic
+
+          ... will publish "Heart ... beat" every 3.3 seconds to the topic
+          "heartbeat-topic"
+
+          mqttcat mqtt://source/ticktock | rq 'filter (a) => { a.payload="tock"
+          }' | mqttcat mqtt://destination/tock
+
+          ... subscribe to ticktock topic on host source, filter out the
+          messages whose payload is tock,     and forward those to the tock
+          topic (using the rq tool https://github.com/dflemstr/rq)
+
+    Options:
+      --loglevel TEXT             Python loglevel, one of
+                                  DEBUG,INFO,WARNING,ERROR,CRITICAL
+      --echo / --no-echo          Echo MQTT Messages to STDERR
+      --source TEXT               File to read MQTT messages to be published (use
+                                  '-' for STDIN)
+      --wait FLOAT                Wait time between publishing messages read from
+                                  --source in seconds (can be float)
+      --loop / --no-loop          Loop message publishing (starting at beginning
+                                  of file after the end is reached
+      --follow / --no-follow      Wait for additional in file after reaching the
+                                  end (like Unix 'tail -f')
+      --destination TEXT          Append JSON-encoded MQTT messages to this file
+                                  (use '-' for STDOUT)
+      --snapshot / --no-snapshot  Keep only the last JSON-encoded message in the
+                                  file specified with --destination
+      --help                      Show this message and exit.
+
+
+
+=======
+Authors
+=======
+
+* Martin Virtel - https://twitter.com/mvtango
+
+This module is part of the `Smart Orchestra Project`_, co-financed by the 
+`Federal Ministery of Economics and Technology`_.
+
+
+.. _Smart Orchestra Project: http://smartorchestra.de
+
+.. _Github repo: https://github.com/martinvirtel/docker-mqtttool
+
+.. _Federal Ministery of Economics and Technology: https://www.bmwi.de/

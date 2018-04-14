@@ -35,7 +35,7 @@ def set_root_logger(loglevel):
               help="File to read MQTT messages to be published (use '-' for STDIN)")
 @click.option('--wait', type=float,
               default=0.1,
-              help="Wait time between publishing messages messages in Seconds (can be float)")
+              help="Wait time between publishing messages from --source in seconds (can be float)")
 @click.option('--loop/--no-loop',
               default=False,
               help="Loop message publishing (starting at beginning of file after the end is reached")
