@@ -91,28 +91,34 @@ def run(url, source, follow, destination, snapshot, loglevel, echo, loop, wait):
         echostream = sys.stderr
     else:
         echostream = False
-    if source == '-' or (source is None and not sys.stdin.isatty()):
+    if source == '-':
         sourcestream = sys.stdin
         mode = 'read'
     else:
         if source is not None:
             sourcestream = open(source)
             mode = 'read'
-    if mode is None:
-        if snapshot:
-            tclass = SnapshotToFile
-        else:
-            tclass = AppendToFile
-        if destination == '-' or (destination is None and not sys.stdout.isatty()):
-            deststream = tclass(sys.stdout)
+    if snapshot:
+        tclass = SnapshotToFile
+    else:
+        tclass = AppendToFile
+    if destination == '-':
+        deststream = tclass(sys.stdout)
+        mode = 'write'
+    else:
+        if destination is not None:
+            deststream = tclass(destination)
             mode = 'write'
-        else:
-            if destination is not None:
-                deststream = tclass(destination)
-                mode = 'write'
+    if mode is None :
+        if not sys.stdin.isatty():
+            sourcestream = sys.stdin
+            mode = 'read'
+        elif not sys.stdout.isatty():
+            deststream = AppendToFile(sys.stdout)
+            mode = 'write'
     if mode == 'write':
         t = MqttTopic(url, echo=echostream, target=deststream)
-        logger.info("Subscribed to {} - messages will be written to {}".format(t.topic, deststream))
+        logger.info("Subscribed to {} - messages will be written to {}".format(url, deststream))
         t.subscribe()
         import time
         while True:
@@ -123,10 +129,10 @@ def run(url, source, follow, destination, snapshot, loglevel, echo, loop, wait):
     elif mode == 'read':
         t = MqttTopic(url, echo=echostream)
         logger.info("Reading from {sourcestream.name} - publishing messages to {} [loop:{loop},wait:{wait} sec.]".format(
-                    t.topic, **locals()))
+                    url, **locals()))
         t.publish(MqttTopic.feeder(sourcestream, loop=loop, follow=follow), wait=wait, echo=echo)
     else:
-        print("""
+        sys.stderr.write("""
         Could not determine wether to read or write.
         Use STDIN redirection or --source parameter to publish Mqtt messages.
         Use STDOUT redirection or --destination to subscribe to topic or topics.""")
