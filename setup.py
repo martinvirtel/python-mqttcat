@@ -33,7 +33,7 @@ setup(
     ),
     author='Martin Virtel',
     author_email='mv@datenfreunde.com',
-    url='https://github.com/martinvirtel/python-mqttcat',
+    url='https://bitbucket.org/datenfreunde/python-mqttcat',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],

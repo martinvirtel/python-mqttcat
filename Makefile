@@ -9,8 +9,5 @@ mosquitto :
 
 docs: build/docs
 
-build/docs:
-	sphinx-build docs/ build/docs/	
-
 distribute:
-	python setup.py bdist upload
+	python setup.py sdist upload
